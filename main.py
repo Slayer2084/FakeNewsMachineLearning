@@ -4,5 +4,5 @@ import ScrapeTweets
 
 
 df = get_combined_dataset()
-df["time"] = df["time"].apply(lambda text: ScrapeTweets.get_timestamp(text))
+df["time"] = df["time"].apply(lambda text: ScrapeTweets.get_tweet_object(text).date)
 print(df["time"])
