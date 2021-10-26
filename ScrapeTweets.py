@@ -131,15 +131,18 @@ def get_timestamp(text):
 
 
 def get_tweet_object(text):
-    tweet_list = []
-    for i, tweet in enumerate(sntwitter.TwitterSearchScraper(text).get_items()):
-        if i > 500:
-            break
-        tweet_list.append(tweet)
-    print("done")
-    return tweet_list[-1]
+    try:
+        tweet_list = []
+        for i, tweet in enumerate(sntwitter.TwitterSearchScraper(text).get_items()):
+            if i > 500:
+                break
+            tweet_list.append(tweet)
+        print("done")
+        return tweet_list[-1]
+    except IndexError:
+        return None
 
 
 if __name__ == '__main__':
     print(get_tweet_object(
-        "C.D.C. Confirms First Possible Community Transmission of Coronavirus in U.S.").date)
+        "wenn man die instagram kommentare bei einem mädchen öffnet").user.protected)
