@@ -13,7 +13,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, Tf
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier, Perceptron
 from TweetTextProcessor import TweetTextProcessor, DataFrameColumnExtracter
-df = pd.read_csv("2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
+df = pd.read_csv("NonPullable/2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
 n_cv = 3
 X, y = df.drop('label', axis="columns"), df["label"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=42)
@@ -110,4 +110,4 @@ print(mod.best_params_)
 grid_results = pd.DataFrame(data=[
     [mod.best_score_, str(mod.best_params_)]
 ])
-grid_results.to_csv(path_or_buf="grid_results.csv", sep=";", mode="a", header=False, index=False)
+grid_results.to_csv(path_or_buf="NonPullable/grid_results.csv", sep=";", mode="a", header=False, index=False)

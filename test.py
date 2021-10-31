@@ -22,14 +22,14 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, Tf
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier, Perceptron
 from TweetTextProcessor import TweetTextProcessor, DataFrameColumnExtracter
-from TweetPreprocessing import Preprocessing
+from TweetPreprocessing import Preprocessor
 pandas.set_option("display.max_colwidth", None)
 pandas.set_option("display.max_columns", None)
-df = pd.read_csv("2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
-preprocessor = Preprocessing(df)
+df = pd.read_csv("NonPullable/2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
+preprocessor = Preprocessor(df)
 # df = preprocessor.remove_names().remove_chars().lemmatize().convert_emoji().remove_spaces(chain=False)
-df = preprocessor.remove_chars().convert_emoji().remove_rare_words().remove_spaces(chain=False)
-preprocessor = Preprocessing(df)
+df = preprocessor.remove_chars().add_convert_emoji().add_remove_rare_words().remove_spaces(chain=False)
+preprocessor = Preprocessor(df)
 preprocessor.get_report()
 X, y = df.drop('label', axis="columns"), df["label"]
 

@@ -18,7 +18,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
 twenty_train = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
 
-df = pd.read_csv('2Cleaned_Fake_News_Dataset.csv', index_col='index', sep=';')
+df = pd.read_csv('NonPullable/2Cleaned_Fake_News_Dataset.csv', index_col='index', sep=';')
 X, y = df.drop('label', axis="columns"), df[['label']]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
 

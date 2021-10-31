@@ -21,7 +21,7 @@ pd.set_option("display.max_rows", 10, "display.max_columns", None)
 enc = LabelBinarizer()
 
 
-df = pd.read_csv('2Cleaned_Fake_News_Dataset.csv', index_col='index', sep=';')
+df = pd.read_csv('NonPullable/2Cleaned_Fake_News_Dataset.csv', index_col='index', sep=';')
 
 X, y = df.drop("label", axis="columns"), df['label']
 print(X)

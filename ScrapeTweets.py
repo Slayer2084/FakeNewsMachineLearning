@@ -145,4 +145,4 @@ def get_tweet_object(text):
 
 if __name__ == '__main__':
     print(get_tweet_object(
-        "wenn man die instagram kommentare bei einem mädchen öffnet").user.protected)
+        "Von Bettvorleger zu Raubkatze: Puma auf dem Sprung: BÖRSE am ").outlinks)

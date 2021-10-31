@@ -5,7 +5,7 @@ import matplotlib.pyplot
 import pandas as pd
 import numpy as np
 import optuna
-from TweetPreprocessing import Preprocessing
+from TweetPreprocessing import Preprocessor
 from functools import partial
 import matplotlib as plt
 from sklearn.model_selection import cross_val_score
@@ -21,10 +21,10 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, Tf
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier, Perceptron
 
-df = pd.read_csv("2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
-preprocessor = Preprocessing(df)
-df = preprocessor.remove_names().remove_chars().lemmatize().convert_emoji().remove_spaces(chain=False)
-preprocessor = Preprocessing(df)
+df = pd.read_csv("NonPullable/2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
+preprocessor = Preprocessor(df)
+df = preprocessor.add_removed_names().remove_chars().add_lemmatized_to_df().add_convert_emoji().remove_spaces(chain=False)
+preprocessor = Preprocessor(df)
 preprocessor.get_report()
 n_cv = 3
 X, Y = df.drop('label', axis="columns"), df["label"]

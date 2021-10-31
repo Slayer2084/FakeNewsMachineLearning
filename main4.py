@@ -19,7 +19,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier, Perceptron
 from TweetTextProcessor import TweetTextProcessor, DataFrameColumnExtracter
 le = LabelEncoder()
-df = pd.read_csv("2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
+df = pd.read_csv("NonPullable/2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=";").reset_index(drop=True)
 n_cv = 3
 X, y = df.drop('label', axis="columns"), df["label"]
 y = le.fit_transform(y)

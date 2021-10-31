@@ -25,17 +25,16 @@ class NansInDataframe(Error):
     pass
 
 
-class Preprocessing:
+class Preprocessor:
     def __init__(self, dframe):
         self.df = dframe
         self.shape = self.df.shape
-
-        if self.df["tweet"].isnull().sum() > 0:
+        if self.df["content"].isnull().sum() > 0:
             raise NullsInDataframe
-        if self.df["tweet"].isna().sum() > 0:
+        if self.df["content"].isna().sum() > 0:
             raise NansInDataframe
 
-    def remove_names(self, chain=True):
+    def add_removed_names(self, chain=True):
         def rm(text):
             if "@" in text:
                 text = re.sub('@.*? ', '@[name] ', text)
@@ -48,26 +47,33 @@ class Preprocessing:
             else:
                 return text
 
-        self.df['tweet'] = self.df['tweet'].copy().apply(rm)
+        self.df['removed_names'] = self.df['content'].copy().apply(rm)
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
     def remove_chars(self, chain=True):
-        self.df = self.df.copy().replace(to_replace=["&amp;", "&gt;", "&lt;", r"\n", r"\r", r"\n\r", r"\r\n",
-                                                     r"\r\n\r\n", "​", "�"],
-                                         value=["&", ">", "<", "", "", "", "", "", "", ""], regex=True)
+        idx = (self.df.applymap(type) == str).all(0)
+        columns_to_apply_to = self.df.columns[idx]
+        for column in columns_to_apply_to:
+            self.df[column] = self.df[column].copy().replace(to_replace=["&amp;", "&gt;", "&lt;", r"\n", r"\r",
+                                                                         r"\n\r", r"\r\n", r"\r\n\r\n", "​", "�"],
+                                                             value=["&", ">", "<", "", "", "", "", "", "", ""],
+                                                             regex=True)
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
     def remove_spaces(self, chain=True):
-        self.df['tweet'] = self.df['tweet'].copy().apply(lambda text: re.sub(' +', ' ', text))
+        idx = (self.df.applymap(type) == str).all(0)
+        columns_to_apply_to = self.df.columns[idx]
+        for column in columns_to_apply_to:
+            self.df[column] = self.df[column].copy().apply(lambda text: re.sub(' +', ' ', text))
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
-    def lemmatize(self, chain=True):
+    def add_lemmatized_to_df(self, chain=True):
         nltk.download('wordnet')
         nltk.download('averaged_perceptron_tagger')
         lemmatizer = WordNetLemmatizer()
@@ -78,9 +84,9 @@ class Preprocessing:
             return " ".join([lemmatizer.lemmatize(word, wordnet_map.get(pos[0], wordnet.NOUN))
                              for word, pos in pos_tagged_text])
 
-        self.df["tweet"] = self.df["tweet"].copy().apply(lambda text: lemmatize_words(text))
+        self.df["lemmatized"] = self.df["content"].copy().apply(lambda text: lemmatize_words(text))
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
     def convert_emoticons(self, chain=True):
@@ -92,34 +98,35 @@ class Preprocessing:
                 text = re.sub(u'(' + emot + ')', "_".join(EMOTICONS[emot].replace(",", "").split()), text)
             return text
 
-        self.df["tweet"] = self.df["tweet"].copy().apply(lambda text: cnvrt_emtcns(text))
+        self.df["content"] = self.df["content"].copy().apply(lambda text: cnvrt_emtcns(text))
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
-    def convert_emoji(self, chain=True):
+    def add_convert_emoji(self, chain=True):
         def convert_emojis(text):
             return emoji.demojize(text, delimiters=("", " "))
 
-        self.df["tweet"] = self.df["tweet"].copy().apply(lambda text: convert_emojis(text))
+        self.df["converted_emojis"] = self.df["content"].copy().apply(lambda text: convert_emojis(text))
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
     def add_pol_subj_to_df(self, chain=True):
-        self.df['sentiment'] = self.df['tweet'].apply(lambda tweet: TextBlob(tweet).sentiment)
+        self.df['polarity'] = self.df['content'].copy().apply(lambda tweet: TextBlob(tweet).sentiment.polarity)
+        self.df['subjectivity'] = self.df['content'].copy().apply(lambda tweet: TextBlob(tweet).sentiment.subjectivity)
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
     def get_report(self):
-        sents = self.df["tweet"].values
+        sents = self.df["content"].values
         labels = self.df["label"].values
         print(report.get_difficulty_report(sents, labels))
 
-    def remove_rare_words(self, chain=True, n_rare_words=10):
+    def add_remove_rare_words(self, chain=True, n_rare_words=10):
         cnt = Counter()
-        for text in self.df["tweet"].values:
+        for text in self.df["content"].values:
             for word in text.split():
                 cnt[word] += 1
         rarewords = set([w for (w, wc) in cnt.most_common()[:-n_rare_words - 1:-1]])
@@ -127,13 +134,17 @@ class Preprocessing:
         def remove_rarewords(txt):
             return " ".join([_word for _word in str(txt).split() if _word not in rarewords])
 
-        self.df["tweet"] = self.df["tweet"].copy().apply(lambda texts: remove_rarewords(texts))
+        self.df["removed_rare_words"] = self.df["content"].copy().apply(lambda texts: remove_rarewords(texts))
         if chain:
-            return Preprocessing(self.df.copy())
+            return Preprocessor(self.df.copy())
         return self.df.copy()
 
 
 if __name__ == "__main__":
-    df = pd.read_csv("2Cleaned_Fake_News_Dataset.csv", index_col='index', sep=';')
-    preprocessing = Preprocessing(df)
-    preprocessing.get_report()
+    from CombineDatasets import get_combined_dataset
+    df = get_combined_dataset()
+    preprocessing = Preprocessor(df)
+    df = preprocessing.add_pol_subj_to_df().add_lemmatized_to_df().add_remove_rare_words().add_convert_emoji().\
+        add_removed_names().remove_chars().remove_spaces(chain=False)
+    # preprocessing.get_report()
+    print(df)
