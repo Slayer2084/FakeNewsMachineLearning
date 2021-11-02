@@ -8,6 +8,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, Gradien
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.svm import SVC
 import numpy as np
+import time
 
 
 class CorrectLabels:
@@ -70,9 +71,12 @@ class CorrectLabels:
         fitted_models = {}
         print("Starting to train models...")
         for idx, (model_name, model) in enumerate(self.models.items()):
+            time1 = time.time()
             model.fit(X_train.toarray(), y_train)
             fitted_models[model_name] = model
-            print("Successfully trained ", model_name, " only ", (len(self.models) - idx), " more to go!")
+            time2 = time.time()
+            print("Successfully trained ", model_name, "in ", ((time2-time1)*1000.0), "ms only ",
+                  (len(self.models) - idx), " more to go!")
         return fitted_models
 
     def get_predict(self, X_test, fitted_models: dict):
