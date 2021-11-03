@@ -2,7 +2,7 @@ import pandas
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
@@ -57,13 +57,13 @@ class CorrectLabels:
         models["LR"] = LogisticRegression(n_jobs=-1)
         # models["PasAgr"] = PassiveAggressiveClassifier(n_jobs=-1) No predict_proba
         models["KNN"] = KNeighborsClassifier(n_jobs=-1)
-        models["SVM"] = SVC()
-        models["DCT"] = DecisionTreeClassifier()
+        # models["SVM"] = SGDClassifier(loss="hinge")
+        # models["DCT"] = DecisionTreeClassifier()
         models["RFC"] = RandomForestClassifier(n_jobs=-1)
-        models["ABC"] = AdaBoostClassifier()
-        models["GBC"] = GradientBoostingClassifier()
-        models["GNB"] = GaussianNB()
-        models["MNB"] = MultinomialNB()
+        # models["ABC"] = AdaBoostClassifier()
+        # models["GBC"] = GradientBoostingClassifier()
+        # models["GNB"] = GaussianNB()
+        # models["MNB"] = MultinomialNB()
 
         return models
 
@@ -72,11 +72,11 @@ class CorrectLabels:
         print("Starting to train models...")
         for idx, (model_name, model) in enumerate(self.models.items()):
             time1 = time.time()
-            model.fit(X_train.toarray(), y_train)
+            model.fit(X_train, y_train)
             fitted_models[model_name] = model
             time2 = time.time()
-            print("Successfully trained ", model_name, "in ", ((time2-time1)*1000.0), "ms only ",
-                  (len(self.models) - idx), " more to go!")
+            print("Successfully trained ", model_name, "in ", ((time2-time1)*1000.0), "ms, only ",
+                  (len(self.models) - idx - 1), " more to go!")
         return fitted_models
 
     def get_predict(self, X_test, fitted_models: dict):
@@ -99,6 +99,13 @@ class CorrectLabels:
             results.append(predictions)
         for prediction in results:
             print(prediction)
+            for (model_name, results) in enumerate(prediction.items()):
+                print(model_name)
+                # for i in range(len(results[0])):
+                    # preds = results[0]
+                    # mask = results[1]
+                    # print(preds, mask)
+
 
 
 if __name__ == "__main__":
@@ -110,7 +117,6 @@ if __name__ == "__main__":
     df["index"] = df.index
     df = df[["index", "content", "label"]]
 
-
     pipe = ColumnTransformer([
         ("vec", TfidfVectorizer(stop_words="english", ngram_range=[1, 3], strip_accents=None,
                                       lowercase=False, smooth_idf=False, analyzer="char", use_idf=True,
@@ -118,5 +124,3 @@ if __name__ == "__main__":
     ], remainder="passthrough")
     label_corrector = CorrectLabels(df, "label", "index", 10, 0.90, pipe, repeats=1)
     label_corrector.repeat()
-
-
