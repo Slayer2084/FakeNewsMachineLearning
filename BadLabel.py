@@ -45,7 +45,7 @@ class CorrectLabels:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1/self.split_rate), random_state=7)
         # print(X_train.shape, y_train.shape)
         self.preprocessing_pipe.fit(X)
-        X_train, X_test = self.preprocessing_pipe.transform(X_train), self.preprocessing_pipe.transform(X_test)
+        X_train = self.preprocessing_pipe.transform(X_train)
         print("Transforming Data...")
         # print(X_train.shape, y_train.shape)
         return X_train, X_test, y_train, y_test
@@ -80,6 +80,8 @@ class CorrectLabels:
         return fitted_models
 
     def get_predict(self, X_test, fitted_models: dict):
+        print("Starting predictions...")
+        X_test = self.preprocessing_pipe.transform(X_test)
         preds = {}
         for model_name, model in fitted_models.items():
             predict = model.predict(X_test)
@@ -90,21 +92,35 @@ class CorrectLabels:
 
     def repeat(self):
         dataset = self.dataset
-        results = []
+        repetitions = []
         for i in range(self.repeats):
             shuffled_dataset = self.shuffle_dataset(dataset)
             X_train, X_test, y_train, y_test = self.get_train_test(shuffled_dataset)
             fitted_models = self.get_trained_models(X_train, y_train)
             predictions = self.get_predict(X_test, fitted_models)
-            results.append(predictions)
-        for prediction in results:
-            print(prediction)
-            for (model_name, results) in enumerate(prediction.items()):
-                print(model_name)
-                # for i in range(len(results[0])):
-                    # preds = results[0]
-                    # mask = results[1]
-                    # print(preds, mask)
+            repetitions.append(predictions)
+            index = X_test.index
+        repeat_results = {}
+        for row in index:  # Für jede Reihe
+            i = 0
+            zero_counter = 0
+            one_counter = 0
+            for rep_results in repetitions:  # Für jede Repetition
+                for model_name, pred_results in rep_results.items():  # Für jede Model Prediction
+                    pred = pred_results[0]
+                    mask = pred_results[1]
+                    print(mask[i])
+                    if mask[i]:
+                        if pred[i] == 1:
+                            one_counter += 1
+                        else:
+                            zero_counter += 1
+
+            repeat_results[row] = [zero_counter, one_counter]
+            i += 1
+        print(repeat_results)
+
+
 
 
 
