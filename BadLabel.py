@@ -1,12 +1,12 @@
-import pandas
+import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import MultinomialNB
+from xgboost import XGBClassifier
 import numpy as np
 import time
 
@@ -14,7 +14,7 @@ import time
 class CorrectLabels:
 
     def __init__(self,
-                 dataset,
+                 dataset: pd.DataFrame,
                  label_column_name: str,
                  index_column_name: str,
                  epochs: int,
@@ -54,29 +54,34 @@ class CorrectLabels:
     def form_models():
         models = {}
         print("Forming Models...")
-        models["LR"] = LogisticRegression(n_jobs=-1)
-        # models["PasAgr"] = PassiveAggressiveClassifier(n_jobs=-1) No predict_proba
+        models["LogisticRegression"] = LogisticRegression(n_jobs=-1, max_iter=10000)
+        # models["PassiveAggressiveClassifier"] = PassiveAggressiveClassifier(n_jobs=-1) No predict_proba
         models["KNN"] = KNeighborsClassifier(n_jobs=-1)
-        # models["SVM"] = SGDClassifier(loss="hinge")
-        # models["DCT"] = DecisionTreeClassifier()
-        models["RFC"] = RandomForestClassifier(n_jobs=-1)
-        # models["ABC"] = AdaBoostClassifier()
-        # models["GBC"] = GradientBoostingClassifier()
-        # models["GNB"] = GaussianNB()
-        # models["MNB"] = MultinomialNB()
+        models["SGDClassifier"] = SGDClassifier(loss="modified_huber", n_jobs=-1)
+        models["DecisionTreeClassifier"] = DecisionTreeClassifier()
+        models["RandomForestClassifier"] = RandomForestClassifier(n_jobs=-1)
+        models["AdaBoostClassifier"] = AdaBoostClassifier()
+        # models["GradientBoostingClassifier"] = GradientBoostingClassifier()
+        # models["GaussianNB"] = GaussianNB()
+        models["MultinomialNB"] = MultinomialNB()
+        # models["Perceptron"] = Perceptron(n_jobs=-1) No predict_proba
+        models["XGBoost"] = XGBClassifier(n_jobs=-1, use_label_encoder=False)
 
         return models
 
     def get_trained_models(self, X_train, y_train):
         fitted_models = {}
         print("Starting to train models...")
+        time3 = time.time()
         for idx, (model_name, model) in enumerate(self.models.items()):
             time1 = time.time()
             model.fit(X_train, y_train)
             fitted_models[model_name] = model
             time2 = time.time()
-            print("Successfully trained ", model_name, "in ", ((time2-time1)*1000.0), "ms, only ",
-                  (len(self.models) - idx - 1), " more to go!")
+            # print("Successfully trained ", model_name, "in ", ((time2-time1)*1000.0), "ms, only ",
+                  # (len(self.models) - idx - 1), " more to go!")
+        time4 = time.time()
+        print("Successfully trained all models in", ((time4-time3)*1000.0), "ms!")
         return fitted_models
 
     def get_predict(self, X_test, fitted_models: dict):
@@ -87,41 +92,48 @@ class CorrectLabels:
             predict = model.predict(X_test)
             predict_proba = model.predict_proba(X_test)
             mask = np.max(predict_proba, axis=1) > self.threshold
-            preds[model_name] = (predict, mask)
+            preds[model_name] = [predict, mask]
         return preds
 
-    def repeat(self):
-        dataset = self.dataset
-        repetitions = []
-        for i in range(self.repeats):
+    def repeat(self, dataset):
+        index_counter_dict = {}
+        # Füllen des index_counter_dict mit "Reihe" : [0, 0]
+        for row in range(len(self.dataset)):
+            index_counter_dict[row] = [0, 0]
+
+        for idx in range(self.repeats):
             shuffled_dataset = self.shuffle_dataset(dataset)
             X_train, X_test, y_train, y_test = self.get_train_test(shuffled_dataset)
             fitted_models = self.get_trained_models(X_train, y_train)
             predictions = self.get_predict(X_test, fitted_models)
-            repetitions.append(predictions)
             index = X_test.index
-        repeat_results = {}
-        for row in index:  # Für jede Reihe
-            i = 0
-            zero_counter = 0
-            one_counter = 0
-            for rep_results in repetitions:  # Für jede Repetition
-                for model_name, pred_results in rep_results.items():  # Für jede Model Prediction
-                    pred = pred_results[0]
-                    mask = pred_results[1]
-                    print(mask[i])
+            for model_name, preds in predictions.items():
+                i = 0
+                for row in index:  # Für jede Reihe
+                    one_or_zero_prediction = preds[0]
+                    mask = preds[1]
+
                     if mask[i]:
-                        if pred[i] == 1:
-                            one_counter += 1
+                        if one_or_zero_prediction[i] == 0:
+                            index_counter_dict[row][0] += 1
                         else:
-                            zero_counter += 1
+                            index_counter_dict[row][1] += 1
 
-            repeat_results[row] = [zero_counter, one_counter]
-            i += 1
-        print(repeat_results)
+                    i += 1
+            print("Completed Repetition ", idx + 1, "out of ", self.repeats, "!")
+        return index_counter_dict
 
-
-
+    def clean_up_bad_labels(self):
+        dataset = self.dataset
+        for epoch in range(self.epochs):
+            time1 = time.time()
+            index_counter_dict = self.repeat(dataset)
+            for row, result in index_counter_dict.items():
+                if result[0] > 3 and result[1] > 3:
+                    dataset.copy()[row] = np.max(result)
+            time2 = time.time()
+            print("Completed Epoch ", epoch+1, "out of ", self.epochs, "in ", ((time2-time1)*1000.0), "ms!")
+        return dataset
 
 
 if __name__ == "__main__":
@@ -135,8 +147,8 @@ if __name__ == "__main__":
 
     pipe = ColumnTransformer([
         ("vec", TfidfVectorizer(stop_words="english", ngram_range=[1, 3], strip_accents=None,
-                                      lowercase=False, smooth_idf=False, analyzer="char", use_idf=True,
-                                      sublinear_tf=True, norm="l2", binary=True), "content")
+                                lowercase=False, smooth_idf=False, analyzer="char", use_idf=True,
+                                sublinear_tf=True, norm="l2", binary=True), "content")
     ], remainder="passthrough")
-    label_corrector = CorrectLabels(df, "label", "index", 10, 0.90, pipe, repeats=1)
-    label_corrector.repeat()
+    label_corrector = CorrectLabels(df, "label", "index", 3, 0.90, pipe, repeats=10)
+    print(label_corrector.clean_up_bad_labels())

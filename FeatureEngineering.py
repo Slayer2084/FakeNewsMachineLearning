@@ -34,6 +34,16 @@ def utils_ner_features(lst_dics_tuples,
         return 0
 
 
+def get_num_changed_words(string1: str, string2: str):
+    word_list_string1 = string1.split()
+    word_list_string2 = string2.split()
+    count = 0
+    for i in range(len(word_list_string1)):
+        if word_list_string1[i] != word_list_string2[i]:
+            count += 1
+    return count
+
+
 def utils_lst_count(
         lst):  # Function from https://towardsdatascience.com/text-analysis-feature-engineering-with-nlp-502d6ea9225d
     dic_counter = collections.Counter()
@@ -70,14 +80,17 @@ def get_features(df_ft):
     df_ft["mentionedUsers"] = df_ft["tweet_object"].apply(lambda tweet: None if tweet is None else tweet.mentionedUsers)
     df_ft["nMentionedUsers"] = df_ft["tweet_object"].apply(
         lambda tweet: None if tweet is None else get_length(tweet.mentionedUsers))
+    df_ft = df_ft.drop("mentionedUsers", axis="columns")
     df_ft["outlinks"] = df_ft["tweet_object"].apply(lambda tweet: None if tweet is None else tweet.outlinks)
     df_ft["shortened_outlinks"] = df_ft["outlinks"].apply(lambda links: None if links is None else shorten_links(links))
+    df_ft = df_ft.drop("outlinks", axis="columns")
     df_ft["author"] = df_ft["op_object"].apply(lambda user: None if user is None else user.username)
+    df_ft = df_ft.drop("author", axis="columns") # No real use case, yet
     df_ft["opVerified"] = df_ft["op_object"].apply(lambda user: None if user is None else user.verified)
     df_ft["opCreated"] = df_ft["op_object"].apply(lambda user: None if user is None else user.created)
     df_ft["opFollowerCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.followersCount)
     df_ft["opFollowingCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.friendsCount)
-    df_ft["opPostedTweetCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.statusesCount)
+    df_ft["opPostedTweetsCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.statusesCount)
     df_ft["opFavouritesCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.favouritesCount)
     df_ft["opListedCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.listedCount)
     df_ft["opProtected"] = df_ft["op_object"].apply(lambda user: None if user is None else user.protected)
@@ -97,6 +110,7 @@ def get_features(df_ft):
     tags_set = list(set(tags_set))
     for feature in tags_set:
         df_ft["tags_" + feature] = df_ft["tags"].apply(lambda x: utils_ner_features(x, feature))
+    df_ft = df_ft.drop("tags", axis="columns")
     df_ft["verb_count"] = df_ft["content"].apply(
         lambda text: len([token for token in ner(text) if token.pos_ == 'VERB']))
     df_ft["noun_count"] = df_ft["content"].apply(
@@ -108,6 +122,8 @@ def get_features(df_ft):
     df_ft["sent_count"] = df_ft["content"].apply(lambda text: len([sent for sent in ner(text)]))
     df_ft["avg_word_len"] = df_ft["char_count"] / df_ft["sent_count"]
     df_ft["avg_sent_len"] = df_ft["word_count"] / df_ft["sent_count"]
+    df_ft["num_rare_words"] = len(df_ft["removed_rare_words"]) - len(df_ft["content"])
+    df_ft["num_lemmatized_words"] = df_ft.apply(lambda x: get_num_changed_words(x['lemmatized'], x['content']), axis=1)
 
     return df_ft
 

@@ -6,7 +6,7 @@ from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from textblob import TextBlob
 from edm import report
-from emoticons import EMOTICONS
+# from emoticons import EMOTICONS
 from collections import Counter
 
 
@@ -89,9 +89,9 @@ class Preprocessor:
             return Preprocessor(self.df.copy())
         return self.df.copy()
 
-    def convert_emoticons(self, chain=True):
-        """Funktioniert zur Zeit nicht optimal, da auch nicht Emoticons mit der gleichen Zeichenfolge erkannt und
-        umgewandelt werden"""
+    """def convert_emoticons(self, chain=True):
+        Funktioniert zur Zeit nicht optimal, da auch nicht Emoticons mit der gleichen Zeichenfolge erkannt und
+        umgewandelt werden
 
         def cnvrt_emtcns(text):
             for emot in EMOTICONS:
@@ -101,7 +101,7 @@ class Preprocessor:
         self.df["content"] = self.df["content"].copy().apply(lambda text: cnvrt_emtcns(text))
         if chain:
             return Preprocessor(self.df.copy())
-        return self.df.copy()
+        return self.df.copy()"""
 
     def add_convert_emoji(self, chain=True):
         def convert_emojis(text):
