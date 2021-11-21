@@ -6,9 +6,6 @@ import collections
 from urllib.parse import urlsplit
 from TweetPreprocessing import Preprocessor
 
-pd.options.mode.chained_assignment = None
-pd.set_option("display.max_colwidth", None)
-pd.set_option("display.max_columns", None)
 
 def shorten_links(link_list):
     shortened_link_list = []
@@ -17,9 +14,8 @@ def shorten_links(link_list):
     return shortened_link_list
 
 
-
-def utils_ner_features(lst_dics_tuples,
-                       tag):  # Function from https://towardsdatascience.com/text-analysis-feature-engineering-with-nlp-502d6ea9225d
+# Function from https://towardsdatascience.com/text-analysis-feature-engineering-with-nlp-502d6ea9225d
+def utils_ner_features(lst_dics_tuples, tag):
     if len(lst_dics_tuples) > 0:
         tag_type = []
         for dic_tuples in lst_dics_tuples:
@@ -83,6 +79,7 @@ def get_features(df_ft):
     df_ft = df_ft.drop("mentionedUsers", axis="columns")
     df_ft["outlinks"] = df_ft["tweet_object"].apply(lambda tweet: None if tweet is None else tweet.outlinks)
     df_ft["shortened_outlinks"] = df_ft["outlinks"].apply(lambda links: None if links is None else shorten_links(links))
+    df_ft["shortened_outlinks"] = df_ft["shortened_outlinks"].astype(str)
     df_ft = df_ft.drop("outlinks", axis="columns")
     df_ft["author"] = df_ft["op_object"].apply(lambda user: None if user is None else user.username)
     df_ft = df_ft.drop("author", axis="columns") # No real use case, yet
@@ -123,13 +120,18 @@ def get_features(df_ft):
     df_ft["avg_word_len"] = df_ft["char_count"] / df_ft["sent_count"]
     df_ft["avg_sent_len"] = df_ft["word_count"] / df_ft["sent_count"]
     df_ft["num_rare_words"] = len(df_ft["removed_rare_words"]) - len(df_ft["content"])
-    df_ft["num_lemmatized_words"] = df_ft.apply(lambda x: get_num_changed_words(x['lemmatized'], x['content']), axis=1)
+    df_ft["num_lemmatized_words"] = df_ft.apply(lambda x: get_num_changed_words(x['lemmatized'], x["content"]), axis=1)
+    df_ft["num_rare_words"] = df_ft.apply(lambda x: get_num_changed_words(x["removed_rare_words"], x["content"]), axis=1)
 
     return df_ft
 
 
 if __name__ == "__main__":
     from CombineDatasets import get_combined_dataset
+
+    pd.options.mode.chained_assignment = None
+    pd.set_option("display.max_colwidth", None)
+    pd.set_option("display.max_columns", None)
 
     df = get_combined_dataset().sample(10)
     print(get_features(df))

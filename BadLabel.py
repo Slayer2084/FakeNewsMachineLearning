@@ -16,9 +16,8 @@ class CorrectLabels:
     def __init__(self,
                  dataset: pd.DataFrame,
                  label_column_name: str,
-                 index_column_name: str,
                  epochs: int,
-                 threshold,
+                 threshold: float,
                  preprocessing_pipe,
                  repeats: int = 500,
                  split_rate: int = 4,
@@ -27,11 +26,12 @@ class CorrectLabels:
         self.threshold = threshold
         self.preprocessing_pipe = preprocessing_pipe
         self.label_column_name = label_column_name
-        self.index_column_name = index_column_name
+        self.index_column_name = "index"
         self.repeats = repeats
         self.epochs = epochs
         self.split_rate = split_rate
         self.models = self.form_models()
+        self.dataset["index"] = self.dataset.index
 
     @staticmethod
     def shuffle_dataset(dataset):
@@ -150,5 +150,5 @@ if __name__ == "__main__":
                                 lowercase=False, smooth_idf=False, analyzer="char", use_idf=True,
                                 sublinear_tf=True, norm="l2", binary=True), "content")
     ], remainder="passthrough")
-    label_corrector = CorrectLabels(df, "label", "index", 3, 0.90, pipe, repeats=10)
+    label_corrector = CorrectLabels(df, "label", 3, 0.90, pipe, repeats=10)
     print(label_corrector.clean_up_bad_labels())
