@@ -58,6 +58,14 @@ def get_length(obj):
     else:
         return len(obj)
 
+def list_none_to_string(list: list):
+    new_list = []
+    for item in list:
+        if item is None:
+            item = ["None"]
+        new_list.append(item)
+
+
 
 @time_it
 def get_features(df_ft):
@@ -79,7 +87,7 @@ def get_features(df_ft):
     df_ft = df_ft.drop("mentionedUsers", axis="columns")
     df_ft["outlinks"] = df_ft["tweet_object"].apply(lambda tweet: None if tweet is None else tweet.outlinks)
     df_ft["shortened_outlinks"] = df_ft["outlinks"].apply(lambda links: None if links is None else shorten_links(links))
-    df_ft["shortened_outlinks"] = df_ft["shortened_outlinks"].astype(str)
+    df_ft["shortened_outlinks"] = df_ft["shortened_outlinks"].apply(lambda outlinks: list_none_to_string(outlinks))
     df_ft = df_ft.drop("outlinks", axis="columns")
     df_ft["author"] = df_ft["op_object"].apply(lambda user: None if user is None else user.username)
     df_ft = df_ft.drop("author", axis="columns") # No real use case, yet

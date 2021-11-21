@@ -1,30 +1,15 @@
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import FeatureUnion
 from gensim.sklearn_api import W2VTransformer
 from sklearn.preprocessing import RobustScaler, OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import Pipeline
-
-
-class TweetTextProcessor(BaseEstimator, TransformerMixin):
-    def __init__(self):
-        self.tweet_text_transformer = Pipeline(steps=[
-            ('count_vectoriser', CountVectorizer()),
-            ('tfidf', TfidfTransformer())])
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X, y=None):
-        return self.tweet_text_transformer.fit_transform(X.squeeze()).toarray()
+from sklearn.pipeline import Pipeline, FeatureUnion
 
 
 def get_feature_union(df):
-    text_vect_pipe = ColumnTransformer([
-        ("Word2Vec", TfidfVectorizer(stop_words="english", ngram_range=[1, 3], strip_accents=None,
-                                lowercase=False, smooth_idf=False, analyzer="char", use_idf=True,
-                                sublinear_tf=True, norm="l2", binary=True), ["content", "lemmatized", "removed_names",
-                                        "converted_emojis", "removed_rare_words"]),
+    text_pipe = ColumnTransformer([
+        ("Word2Vec", TfidfVectorizer(), ["content", "lemmatized", "removed_names",
+                                         "converted_emojis", "removed_rare_words"]),
     ])
 
     num_pipe = ColumnTransformer([
@@ -44,9 +29,10 @@ def get_feature_union(df):
     ])
 
     pipe = FeatureUnion([
-        ("text_features", text_vect_pipe),
-        ("numerical_features", num_pipe),
-        ("tag_features", tag_pipe),
-        ("hot_encoded_features", hot_encoded_pipe)
+        ("text", text_pipe),
+        ("num", num_pipe),
+        ("tag", tag_pipe),
+        ("hot_encoded", hot_encoded_pipe)
     ])
+
     return pipe

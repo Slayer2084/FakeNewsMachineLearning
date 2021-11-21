@@ -44,9 +44,9 @@ class CorrectLabels:
         y = dataset[self.label_column_name]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1/self.split_rate), random_state=7)
         # print(X_train.shape, y_train.shape)
+        print("Transforming Data...")
         self.preprocessing_pipe.fit(X)
         X_train = self.preprocessing_pipe.transform(X_train)
-        print("Transforming Data...")
         # print(X_train.shape, y_train.shape)
         return X_train, X_test, y_train, y_test
 
