@@ -31,6 +31,7 @@ class CorrectLabels:
         self.epochs = epochs
         self.split_rate = split_rate
         self.models = self.form_models()
+        self.dataset.index = range(len(self.dataset.index))
         self.dataset["index"] = self.dataset.index
 
     @staticmethod
@@ -63,7 +64,7 @@ class CorrectLabels:
         models["AdaBoostClassifier"] = AdaBoostClassifier()
         # models["GradientBoostingClassifier"] = GradientBoostingClassifier()
         # models["GaussianNB"] = GaussianNB()
-        models["MultinomialNB"] = MultinomialNB()
+        # models["MultinomialNB"] = MultinomialNB()
         # models["Perceptron"] = Perceptron(n_jobs=-1) No predict_proba
         models["XGBoost"] = XGBClassifier(n_jobs=-1, use_label_encoder=False)
 
@@ -140,15 +141,8 @@ if __name__ == "__main__":
     from CombineDatasets import get_combined_dataset
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.compose import ColumnTransformer
+    from PreprocessPipe import get_feature_union
+    from FeatureEngineering import get_features
 
-    df = get_combined_dataset()
-    df["index"] = df.index
-    df = df[["index", "content", "label"]]
-
-    pipe = ColumnTransformer([
-        ("vec", TfidfVectorizer(stop_words="english", ngram_range=[1, 3], strip_accents=None,
-                                lowercase=False, smooth_idf=False, analyzer="char", use_idf=True,
-                                sublinear_tf=True, norm="l2", binary=True), "content")
-    ], remainder="passthrough")
-    label_corrector = CorrectLabels(df, "label", 3, 0.90, pipe, repeats=10)
-    print(label_corrector.clean_up_bad_labels())
+    df = get_features(get_combined_dataset())
+    df.to_csv(path_or_buf="/data/CombinedWithFeatures.csv", sep=";")

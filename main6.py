@@ -65,7 +65,7 @@ def optimize(trial, x, y):
 
     classes = list(set(df['label'].values))
     train_x, valid_x, train_y, valid_y = train_test_split(
-        x, y, test_size=(0.1), random_state=0
+        x, y, test_size=0.1, random_state=0
     )
 
     tweet_data = ColumnTransformer([

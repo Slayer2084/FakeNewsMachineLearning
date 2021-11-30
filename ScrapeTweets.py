@@ -1,4 +1,5 @@
 import snscrape.modules.twitter as sntwitter
+import snscrape
 import pandas as pd
 from datetime import datetime
 
@@ -140,6 +141,10 @@ def get_tweet_object(text):
         print("done")
         return tweet_list[-1]
     except IndexError:
+        print("Not from Twitter")
+        return None
+    except snscrape.base.ScraperException:
+        print("BaseScraperException")
         return None
 
 

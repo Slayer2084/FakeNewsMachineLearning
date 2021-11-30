@@ -81,9 +81,6 @@ def optimize(trial, x, y):
                           reg_alpha=reg_alpha, reg_lambda=reg_lambda, base_score=base_score, use_label_encoder=False)
     model.fit(train_x, train_y)
 
-
-
-
     return model.score(valid_x, valid_y)
 
 

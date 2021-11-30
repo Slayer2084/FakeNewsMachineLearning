@@ -34,6 +34,10 @@ def get_num_changed_words(string1: str, string2: str):
     word_list_string1 = string1.split()
     word_list_string2 = string2.split()
     count = 0
+    if len(word_list_string1) != len(word_list_string2):
+        print(string1)
+        print(string2)
+        return 0
     for i in range(len(word_list_string1)):
         if word_list_string1[i] != word_list_string2[i]:
             count += 1
@@ -58,13 +62,16 @@ def get_length(obj):
     else:
         return len(obj)
 
-def list_none_to_string(list: list):
-    new_list = []
-    for item in list:
-        if item is None:
-            item = ["None"]
-        new_list.append(item)
 
+def list_none_to_string(liste: list):
+    if liste is None:
+        return ["None"]
+    new_list = []
+    for item in liste:
+        if item is None:
+            item = "None"
+        new_list.append(item)
+    return new_list
 
 
 @time_it
@@ -81,6 +88,7 @@ def get_features(df_ft):
     df_ft["hashtags"] = df_ft["tweet_object"].apply(lambda tweet: None if tweet is None else tweet.hashtags)
     df_ft["nHashtags"] = df_ft["tweet_object"].apply(
         lambda tweet: None if tweet is None else get_length(tweet.hashtags))
+    df_ft = df_ft.drop("hashtags", axis="columns")
     df_ft["mentionedUsers"] = df_ft["tweet_object"].apply(lambda tweet: None if tweet is None else tweet.mentionedUsers)
     df_ft["nMentionedUsers"] = df_ft["tweet_object"].apply(
         lambda tweet: None if tweet is None else get_length(tweet.mentionedUsers))
@@ -89,8 +97,10 @@ def get_features(df_ft):
     df_ft["shortened_outlinks"] = df_ft["outlinks"].apply(lambda links: None if links is None else shorten_links(links))
     df_ft["shortened_outlinks"] = df_ft["shortened_outlinks"].apply(lambda outlinks: list_none_to_string(outlinks))
     df_ft = df_ft.drop("outlinks", axis="columns")
+    df_ft = df_ft.drop("shortened_outlinks", axis="columns")
+    # https://stackoverflow.com/questions/47786822/how-do-you-one-hot-encode-columns-with-a-list-of-strings-as-values
     df_ft["author"] = df_ft["op_object"].apply(lambda user: None if user is None else user.username)
-    df_ft = df_ft.drop("author", axis="columns") # No real use case, yet
+    df_ft = df_ft.drop("author", axis="columns")  # No real use case, yet
     df_ft["opVerified"] = df_ft["op_object"].apply(lambda user: None if user is None else user.verified)
     df_ft["opCreated"] = df_ft["op_object"].apply(lambda user: None if user is None else user.created)
     df_ft["opFollowerCount"] = df_ft["op_object"].apply(lambda user: None if user is None else user.followersCount)
@@ -129,7 +139,8 @@ def get_features(df_ft):
     df_ft["avg_sent_len"] = df_ft["word_count"] / df_ft["sent_count"]
     df_ft["num_rare_words"] = len(df_ft["removed_rare_words"]) - len(df_ft["content"])
     df_ft["num_lemmatized_words"] = df_ft.apply(lambda x: get_num_changed_words(x['lemmatized'], x["content"]), axis=1)
-    df_ft["num_rare_words"] = df_ft.apply(lambda x: get_num_changed_words(x["removed_rare_words"], x["content"]), axis=1)
+    df_ft["num_rare_words"] = df_ft.apply(lambda x: get_num_changed_words(x["removed_rare_words"], x["content"]),
+                                          axis=1)
 
     return df_ft
 
@@ -142,4 +153,4 @@ if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
 
     df = get_combined_dataset().sample(10)
-    print(get_features(df))
+    print(get_features(df)["shortened_outlinks"])
