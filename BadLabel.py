@@ -144,5 +144,5 @@ if __name__ == "__main__":
     from PreprocessPipe import get_feature_union
     from FeatureEngineering import get_features
 
-    df = get_features(get_combined_dataset())
+    df = get_features(get_combined_dataset().head(100))
     df.to_csv(path_or_buf="/data/CombinedWithFeatures.csv", sep=";")
