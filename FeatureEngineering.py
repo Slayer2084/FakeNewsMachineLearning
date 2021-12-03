@@ -134,7 +134,8 @@ def get_features(df_ft):
         lambda text: len([token for token in ner(text) if token.pos_ == 'ADJ']))
     df_ft["word_count"] = df_ft["content"].apply(
         lambda text: len([token for token in ner(text)]))
-    df_ft["sent_count"] = df_ft["content"].apply(lambda text: len([sent for sent in ner(text)]))
+    df_ft["sent_count"] = df_ft["content"].apply(lambda text: len([[token.text for token in sent]
+                                                                   for sent in ner(text).sents]))
     df_ft["avg_word_len"] = df_ft["char_count"] / df_ft["sent_count"]
     df_ft["avg_sent_len"] = df_ft["word_count"] / df_ft["sent_count"]
     df_ft["num_rare_words"] = len(df_ft["removed_rare_words"]) - len(df_ft["content"])
@@ -153,4 +154,4 @@ if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
 
     df = get_combined_dataset().sample(10)
-    print(get_features(df)["shortened_outlinks"])
+    print(get_features(df))

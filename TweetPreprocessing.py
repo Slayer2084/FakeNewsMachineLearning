@@ -124,7 +124,7 @@ class Preprocessor:
         labels = self.df["label"].values
         print(report.get_difficulty_report(sents, labels))
 
-    def add_remove_rare_words(self, chain=True, n_rare_words=10):
+    def add_remove_rare_words(self, chain=True, n_rare_words=50):
         cnt = Counter()
         for text in self.df["content"].values:
             for word in text.split():
