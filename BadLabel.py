@@ -43,7 +43,7 @@ class CorrectLabels:
     def get_train_test(self, dataset):
         X = dataset.drop([self.label_column_name, self.index_column_name], axis="columns")
         y = dataset[self.label_column_name]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1/self.split_rate), random_state=7)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1 / self.split_rate), random_state=7)
         # print(X_train.shape, y_train.shape)
         print("Transforming Data...")
         self.preprocessing_pipe.fit(X)
@@ -80,9 +80,9 @@ class CorrectLabels:
             fitted_models[model_name] = model
             time2 = time.time()
             # print("Successfully trained ", model_name, "in ", ((time2-time1)*1000.0), "ms, only ",
-                  # (len(self.models) - idx - 1), " more to go!")
+            # (len(self.models) - idx - 1), " more to go!")
         time4 = time.time()
-        print("Successfully trained all models in", ((time4-time3)*1000.0), "ms!")
+        print("Successfully trained all models in", ((time4 - time3) * 1000.0), "ms!")
         return fitted_models
 
     def get_predict(self, X_test, fitted_models: dict):
@@ -133,16 +133,20 @@ class CorrectLabels:
                 if result[0] > 3 and result[1] > 3:
                     dataset.copy()[row] = np.max(result)
             time2 = time.time()
-            print("Completed Epoch ", epoch+1, "out of ", self.epochs, "in ", ((time2-time1)*1000.0), "ms!")
+            print("Completed Epoch ", epoch + 1, "out of ", self.epochs, "in ", ((time2 - time1) * 1000.0), "ms!")
         return dataset
 
 
 if __name__ == "__main__":
-    from CombineDatasets import get_combined_dataset
+    from CombineDatasets import get_combined_dataset, get_combined_features_dataset
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.compose import ColumnTransformer
     from PreprocessPipe import get_feature_union
     from FeatureEngineering import get_features
 
-    df = get_features(get_combined_dataset().head(100))
-    df.to_csv(path_or_buf="/data/CombinedWithFeatures.csv", sep=";")
+    df = get_combined_features_dataset()
+    pipe = get_feature_union(df)
+    label_cleaner = CorrectLabels(df, "label", 1, 0.9, pipe, 4, split_rate=8)
+    refined_df = label_cleaner.clean_up_bad_labels()
+    print(refined_df)
+    refined_df.to_csv(path_or_buf="data/RefinedCombinedDataset.csv", sep=";")

@@ -1,4 +1,11 @@
+import pandas
 import pandas as pd
+
+
+def get_combined_features_dataset():
+    df = pandas.read_csv(filepath_or_buffer="data/CombinedWithFeatures.csv", sep=";")
+    df = df.drop("index", axis="columns")
+    return df
 
 
 def get_combined_dataset():
@@ -17,4 +24,4 @@ def get_combined_dataset():
 
 
 if __name__ == "__main__":
-    print(get_combined_dataset())
+    print(get_combined_features_dataset())
